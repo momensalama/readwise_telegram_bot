@@ -46,7 +46,7 @@ def restricted(func):
     @wraps(func)
     async def wrapped(update, context, *args, **kwargs):
         user_id = update.effective_user.id
-        if user_id != ADMIN:  # تصحيح الشرط
+        if ADMIN is None or user_id != ADMIN:
             print(f"Unauthorized access denied for {user_id}.")
             return
         return await func(update, context, *args, **kwargs)
@@ -60,13 +60,15 @@ def url_extracter(entities):
         elif ent.type == MessageEntity.URL:
             return str(txt)
 
+FORWARD = range(1)
+
 @restricted
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Bot for integration with ReadWise API and Telegram.")
 
 @restricted
 async def send_to_readwise(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from_who = str(update.message.forward_from_chat.username)
+    from_who = update.message.forward_from_chat.username if update.message.forward_from_chat else "Unknown"
     telegram_link = f"https://t.me/{from_who}/{update.message.forward_from_message_id}"
     text = update.message.text_html if update.message.caption_html is None else update.message.caption_html
     post_link = url_extracter(update.message.parse_entities())
@@ -89,7 +91,7 @@ async def prepare_reader(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 @restricted
 async def send_to_reader(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from_who = str(update.message.forward_from_chat.username)
+    from_who = update.message.forward_from_chat.username if update.message.forward_from_chat else "Unknown"
     telegram_link = f"https://t.me/{from_who}/{update.message.forward_from_message_id}"
     text = update.message.text_html if update.message.caption_html is None else update.message.caption_html
 
@@ -126,4 +128,7 @@ if __name__ == '__main__':
     def run_bot():
         application.run_polling()
 
-    threading.Thread(target=run_bot, daemon=True).start()
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
+
+    app_web.run(host="0.0.0.0", port=8000)
