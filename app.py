@@ -13,7 +13,15 @@ load_dotenv()
 # الحصول على التوكين من env
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 WISE = ReadWise(os.getenv('READWISE_TOKEN'))
-ADMIN = int(os.getenv('ADMIN_USER_ID'))  # تحويل إلى int
+
+ADMIN_ID = os.getenv('ADMIN_USER_ID')
+
+try:
+    ADMIN = int(ADMIN_ID) if ADMIN_ID and ADMIN_ID.isdigit() else None
+except ValueError:
+    ADMIN = None
+
+print(f"Admin ID: {ADMIN}")
 
 # تشغيل سيرفر ويب لـ Health Check
 app_web = Flask(__name__)
